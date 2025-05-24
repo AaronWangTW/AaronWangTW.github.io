@@ -25,6 +25,10 @@ jobs:
       - name: Setup Node.js ⚙️ - Cache dependencies ⚡ - Install dependencies 🔧
         uses: ./.github/workflows/setup-node
 
+      - name: Change to personal-website directory
+        working-directory: personal-website
+        run: echo "Entered project folder"
+
       - name: Setup Pages ⚙️
         uses: actions/configure-pages@v4
         with:
@@ -36,7 +40,7 @@ jobs:
       - name: Upload artifact 📡
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: personal-website/out
 
   deploy:
     environment:
