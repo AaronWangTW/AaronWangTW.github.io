@@ -1,8 +1,9 @@
+# File: .github/workflows/setup-node/action.yml
 name: setup-node
 description: "Setup Node.js ⚙️ - Cache dependencies ⚡ - Install dependencies 🔧"
 
 inputs:
-  working-directory:   # <-- NEW input for directory, default to '.'
+  working-directory:
     description: 'Working directory where package.json is located'
     required: false
     default: '.'
@@ -14,17 +15,17 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: 20
-      working-directory: ${{ inputs.working-directory }}   # <-- run in specified dir
 
     - name: Cache dependencies ⚡
       id: cache_dependencies
       uses: actions/cache@v3
       with:
-        path: ${{ inputs.working-directory }}/node_modules    # <-- cache node_modules in working dir
-        key: node-modules-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}  # <-- cache key based on lockfile in working dir
+        path: ${{ inputs.working-directory }}/node_modules
+        key: node-modules-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
 
     - name: Install dependencies 🔧
       shell: bash
       if: steps.cache_dependencies.outputs.cache-hit != 'true'
-      run: npm ci
-      working-directory: ${{ inputs.working-directory }}     # <-- run npm ci in working dir
+      run: |
+        cd ${{ inputs.working-directory }}
+        npm ci
