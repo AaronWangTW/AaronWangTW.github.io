@@ -12,7 +12,7 @@ export default function MainLayoutClient() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Left pane */}
       <div className="w-1/3 border-r border-gray-300 p-4">
         <PromptInput onSubmit={handlePromptSubmit} />
