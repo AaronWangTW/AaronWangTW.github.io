@@ -71,8 +71,8 @@ export default function OhNoBlock() {
     return (
         <div className="p-6 max-w-4xl mx-auto bg-white rounded shadow text-center">
             <h2 className="text-2xl font-bold mb-4">
-                Oh no, I don't have content prepared for that... <br />
-                But here's a fun game for your trouble!
+                Oh no, I don&apos;t have content prepared for that... <br />
+                But here&apos;s a fun game for your trouble!
             </h2>
 
             <div className="grid grid-cols-4 gap-4 justify-center max-w-md mx-auto mb-6">
