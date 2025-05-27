@@ -7,6 +7,7 @@ const cannedResponses = {
   'portfolio': "Sure! Here's my portfolio with web apps, design systems, and creative experiments.",
   'projects': "I've built a networking server, filesystem tools, and more. Ask me about any!",
   'contact info': "Reach me via LinkedIn, GitHub, or email — check the Contact section.",
+  'resume': "Here's my resume!"
 };
 
 export default function PromptInput({ onSubmit }) {

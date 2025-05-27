@@ -5,6 +5,7 @@ import AboutBlock from '../blocks/aboutBlock';
 import PortfolioBlock from '../blocks/portfolioBlock';
 import OhNoBlock from '../blocks/ohnoBlock';
 import IntroductionBlock from '../blocks/introBlock';
+import ResumeBlock from '../blocks/resumeBlock';
 
 export default function ContentDisplay({ prompt }) {
   const getContentBlock = () => {
@@ -25,6 +26,10 @@ export default function ContentDisplay({ prompt }) {
       lower.includes('showcase')
     ) {
       return <PortfolioBlock />;
+    }
+
+    if (lower.includes('resume')) {
+      return <ResumeBlock />;
     }
 
     return <OhNoBlock/>;
