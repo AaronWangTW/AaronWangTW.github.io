@@ -93,7 +93,7 @@ export default function OhNoBlock() {
                             >
                                 {/* Front of card */}
                                 <div
-                                    className="absolute w-full h-full bg-indigo-600 rounded flex items-center justify-center text-3xl text-white select-none"
+                                    className="absolute w-full h-full bg-gray-600 rounded flex items-center justify-center text-3xl text-white select-none"
                                     style={{ backfaceVisibility: 'hidden' }}
                                 >
                                     ?
@@ -113,7 +113,7 @@ export default function OhNoBlock() {
 
             <button
                 onClick={resetGame}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition"
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition"
             >
                 Restart Game
             </button>

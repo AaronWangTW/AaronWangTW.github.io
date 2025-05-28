@@ -56,7 +56,7 @@ export default function PromptInput({ onSubmit }) {
           >
             <div
               className={`max-w-[75%] px-4 py-2 rounded-lg text-sm transition-all duration-300 ease-out ${entry.type === 'user'
-                  ? 'bg-indigo-600 text-white animate-fade-in'
+                  ? 'bg-gray-600 text-white animate-fade-in'
                   : 'bg-gray-100 text-gray-800 animate-fade-in'
                 }`}
             >
@@ -69,7 +69,7 @@ export default function PromptInput({ onSubmit }) {
 
       {/* Input Area */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <label htmlFor="prompt" className="text-sm text-gray-600">
+        <label htmlFor="prompt" className="text-lg text-gray-600">
           Enter a prompt:
         </label>
         <input
@@ -78,11 +78,11 @@ export default function PromptInput({ onSubmit }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Try: about, portfolio, projects..."
-          className="rounded border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded border-2 border-gray-600 p-3 focus:outline-none focus:ring-2 focus:ring-gray-700"
         />
         <button
           type="submit"
-          className="mt-1 rounded bg-indigo-600 text-white py-2 hover:bg-indigo-700 transition"
+          className="mt-1 rounded bg-gray-600 text-white py-2 hover:bg-indigo-700 transition"
         >
           Submit
         </button>
@@ -90,7 +90,7 @@ export default function PromptInput({ onSubmit }) {
 
       {/* Quick Prompts */}
       <div className="mt-4">
-        <p className="text-sm text-gray-600 mb-2">Quick prompts:</p>
+        <p className="text-lg text-gray-600 mb-2">Quick prompts:</p>
         <div className="flex flex-wrap gap-2">
           {Object.keys(cannedResponses).map((prompt) => (
             <button
