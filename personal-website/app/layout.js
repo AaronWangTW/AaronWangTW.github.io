@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: 'Your Personal Website',
+  title: 'Aaron Wang',
   description: 'Welcome to my site!',
 };
 
