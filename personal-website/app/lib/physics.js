@@ -6,6 +6,8 @@ let world = null;
 let runner = null;
 let mouse, mouseConstraint;
 const bodies = new Map();
+const initialPositions = new Map();
+const wireVisuals = new Map();
 
 export function initPhysics() {
     if (engine) return;
@@ -24,6 +26,7 @@ export function initPhysics() {
         },
     });
 
+
     Matter.World.add(world, mouseConstraint);
 
     Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
@@ -38,7 +41,71 @@ export function initPhysics() {
     Matter.Runner.run(runner, engine);
 }
 
-const initialPositions = new Map();
+export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segmentCount = 15) {
+    const segmentLength = 15;
+    const segmentWidth = 8;
+    const segments = [];
+    const visuals = [];
+
+    let previousBody = null;
+
+    for (let i = 0; i < segmentCount; i++) {
+        const segment = Matter.Bodies.rectangle(
+            startBody.position.x + startOffset.x,
+            startBody.position.y + startOffset.y + i * segmentLength,
+            segmentWidth,
+            segmentLength,
+            {
+                collisionFilter: { group: -1 }, // Prevent segments from colliding with each other
+                frictionAir: 0.02,
+            }
+        );
+
+        Matter.World.add(world, segment);
+        segments.push(segment);
+
+        const el = document.createElement('div');
+        el.style.position = 'absolute';
+        el.style.width = `${segmentWidth}px`;
+        el.style.height = `${segmentLength}px`;
+        el.style.background = '#666';
+        el.style.borderRadius = '2px';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '1';
+        el.style.transformOrigin = 'center';
+        el.style.transform = `
+  translate(${segment.position.x - segmentWidth / 2}px, ${segment.position.y - segmentLength / 2}px)
+  rotate(${segment.angle}rad)
+`;
+        document.getElementById("container").appendChild(el);
+        visuals.push({ body: segment, el });
+
+        if (previousBody) {
+            const constraint = Matter.Constraint.create({
+                bodyA: previousBody,
+                bodyB: segment,
+                length: segmentLength,
+                stiffness: 0.8,
+            });
+            Matter.World.add(world, constraint);
+        }
+
+        previousBody = segment;
+    }
+
+    // Attach first segment to capsule
+    const attach = Matter.Constraint.create({
+        bodyA: startBody,
+        pointA: startOffset,
+        bodyB: segments[0],
+        pointB: { x: 0, y: -segmentLength / 2 },
+        stiffness: 1,
+    });
+
+    Matter.World.add(world, attach);
+
+    wireVisuals.set(startBody, visuals);
+}
 
 export function addCapsule(el, { x = 100, y = 100 } = {}) {
     if (!engine || !el) return;
@@ -63,6 +130,8 @@ export function addCapsule(el, { x = 100, y = 100 } = {}) {
 
     Matter.World.add(world, body);
     bodies.set(el, body);
+
+    addPhysicalWire(body, { x: 50, y: 0 });
 
     // Make sure the element's initial CSS position matches x, y
     el.style.position = 'absolute';
@@ -100,11 +169,48 @@ export function tick() {
             const translateX = body.position.x - (initPos.x + el.offsetWidth / 2);
             const translateY = body.position.y - (initPos.y + el.offsetHeight / 2);
 
-            el.style.transform = `
-  translate(${translateX}px, ${translateY}px)
-  rotate(${body.angle}rad)
-`;
+            el.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${body.angle}rad)`;
         });
+       wireVisuals.forEach((segments) => {
+  for (let i = 0; i < segments.length - 1; i++) {
+    const { body: currBody, el: currEl } = segments[i];
+    const { body: nextBody } = segments[i + 1];
+
+    const p0 = currBody.position;
+    const p1 = nextBody.position;
+
+    const dx = p1.x - p0.x;
+    const dy = p1.y - p0.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx);
+
+    // Position at midpoint
+    const midX = (p0.x + p1.x) / 2;
+    const midY = (p0.y + p1.y) / 2;
+
+    // Set the style to connect p0 and p1
+    currEl.style.width = `${length}px`;
+    currEl.style.height = `8px`; // fixed thickness for wire segment
+    currEl.style.transformOrigin = 'center center';
+
+    currEl.style.transform = `
+      translate(${midX}px, ${midY}px)
+      rotate(${angle}rad)
+      translate(-50%, -50%)
+    `;
+  }
+
+  // Last segment: you can either hide it or position it normally:
+  if (segments.length > 0) {
+    const last = segments[segments.length - 1];
+    last.el.style.width = `8px`;
+    last.el.style.height = `8px`;
+    last.el.style.transform = `
+      translate(${last.body.position.x}px, ${last.body.position.y}px)
+      translate(-50%, -50%)
+    `;
+  }
+});
 
         tick();
     });
