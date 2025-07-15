@@ -1,7 +1,7 @@
 export default function RetroScreen({ content }) {
   return (
 
-    <div className="select-none relative w-[90vw] max-w-5xl h-[60vh] bg-[#111827] rounded-xl border-[10px] border-gray-700 shadow-[inset_0_0_60px_#000000aa,_0_8px_30px_#00000088] p-6 screen-container">
+    <div className="select-none relative w-[90vw] max-w-5xl h-[60vh] bg-[#111827] rounded-xl border-[10px] border-gray-700 shadow-[inset_0_0_60px_#000000aa,_0_8px_20px_#00000088] p-6 screen-container">
 
       {/* Scanlines */}
       <div className="screen-scanlines" />
@@ -47,7 +47,7 @@ export default function RetroScreen({ content }) {
       />
 
       {/* Content */}
-      <div className="relative z-30 text-green-200 text-md h-full overflow-y-auto p-4">
+      <div className="relative z-30 text-green-200 text-md h-full w-full overflow-y-auto">
         {content || <div>
           <p className="text-center opacity-70 mt-30">Welcome! You're visiting the website of:</p>
           <h1 className="text-center text-6xl">Aaron Wang</h1>
