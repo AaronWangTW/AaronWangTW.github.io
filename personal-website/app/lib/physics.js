@@ -30,16 +30,20 @@ export function initPhysics() {
     if (engine) return;
 
     engine = Matter.Engine.create();
+    engine.enableSleeping = true;
     world = engine.world;
-    world.gravity.y = 1.2;
+    world.gravity.y = 0.8;
+
+    engine.positionIterations = 6;
+    engine.velocityIterations = 4;
 
     mouse = Matter.Mouse.create(document.body);
     mouseConstraint = Matter.MouseConstraint.create(engine, {
         mouse,
         constraint: {
-            stiffness: 0.2,
+            stiffness: 0.8,
             render: { visible: false },
-            angularStiffness: 0.4, // how much rotation resistance to drag
+            angularStiffness: 0.1, // how much rotation resistance to drag
         },
     });
 
@@ -68,12 +72,21 @@ export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segment
 
     for (let i = 0; i < segmentCount; i++) {
         const segment = Matter.Bodies.circle(
-            startBody.position.x + startOffset.x,
-            startBody.position.y + startOffset.y + i * segmentLength,
+            startBody.position.x + startOffset.x + i * segmentLength,
+            startBody.position.y + startOffset.y,
             i == segmentCount - 1 ? segmentWidth * 2 : segmentWidth,
             {
-                collisionFilter: { group: -1 },
-                frictionAir: 0.02,
+
+                // Create separate collision group for wire segments
+                collisionFilter: { 
+                    group: -2, // Negative group means they don't collide with each other
+                    category: 0x0002,
+                    mask: 0x0001 | 0x0004 // Only collide with walls and static bodies
+                },
+                frictionAir: 0.03,
+                friction: 0.1,
+                restitution: 0.1,
+                density: 0.001, // Very light segments
             }
         );
 
@@ -85,7 +98,8 @@ export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segment
                 bodyA: previousBody,
                 bodyB: segment,
                 length: segmentLength,
-                stiffness: 0.5,
+                stiffness: 0.8,
+                damping: 0.1
             });
             Matter.World.add(world, constraint);
         }
@@ -114,6 +128,7 @@ export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segment
         bodyB: segments[0],
         pointB: { x: 0, y: -segmentLength / 2 },
         stiffness: 1,
+        damping: 0.3,
     });
 
     Matter.World.add(world, attach);
@@ -203,17 +218,22 @@ export function addCapsule(el, { x = 100, y = 100 } = {}, content) {
         width,
         height,
         {
-            restitution: 0.3,
-            friction: 0.3,
+            restitution: 0.1,
+            friction: 0.8,
             frictionStatic: 2,
             frictionAir: 0.01,
+            density: 0.01, // Increased density for stability
+            collisionFilter: {
+                category: 0x0001,
+                mask: 0x0001 | 0x0004 // Collide with other capsules and walls
+            }
         }
     );
 
     Matter.World.add(world, body);
     bodies.set(el, body);
 
-    addPhysicalWire(body, { x: width / 2 - 5, y: height / 2 - 10 }, 20,content);
+    addPhysicalWire(body, { x: width / 2 - 10, y: height / 2 - 10 }, 20,content);
 
     // Make sure the element's initial CSS position matches x, y
     el.style.position = 'absolute';
@@ -340,6 +360,28 @@ export function tick() {
 
         tick();
     });
+}
+
+export function addRackPhysics(x, y, width = 120, height = 50) {
+    if (!world) initPhysics();
+  const collisionHeight = 10; 
+  const bottomY = y + height * 0.95;
+
+  const rackBody = Matter.Bodies.rectangle(
+    x + width / 2,
+    bottomY,
+    width * 0.8,
+    collisionHeight,
+    {
+      isStatic: true,
+      label: "rack",
+      friction: 0.8,
+      restitution: 0.05,
+    }
+  );
+
+  Matter.World.add(world, rackBody);
+  return rackBody;
 }
 
 export function addWalls() {

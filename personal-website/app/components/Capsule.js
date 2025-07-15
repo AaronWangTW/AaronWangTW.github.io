@@ -24,7 +24,7 @@ export default function Capsule({ label, x = 0, y = 0 ,content}) {
       />
 
       <button
-        className="relative z-10 flex items-center px-6 py-3 text-sm font-bold text-white font-mono
+        className="relative z-10 flex items-center px-6 py-3 text-sm font-bold text-white
           bg-gray-800 border border-[#4a4a4a] rounded-full
           shadow-[inset_0_2px_2px_rgba(255,255,255,0.1),_0_3px_6px_rgba(0,0,0,0.3)]
           hover:brightness-110 active:translate-y-[1px] active:brightness-95
