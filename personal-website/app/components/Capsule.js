@@ -1,17 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { addCapsule } from '../lib/physics';
-export default function Capsule({ label, onPlug, x = 0, y = 0 }) {
+export default function Capsule({ label, x = 0, y = 0 ,content}) {
   const ref = useRef();
   useEffect(() => {
     if (ref.current) {
       requestAnimationFrame(() => {
-        addCapsule(ref.current, { x, y });
+        addCapsule(ref.current, { x, y }, content);
       });
     }
   }, []);
-  const handleClick = () => {
-    onPlug?.();
-  };
 
   return (
     <div
@@ -27,7 +24,6 @@ export default function Capsule({ label, onPlug, x = 0, y = 0 }) {
       />
 
       <button
-        onClick={handleClick}
         className="relative z-10 flex items-center px-6 py-3 text-sm font-bold text-white font-mono
           bg-gray-800 border border-[#4a4a4a] rounded-full
           shadow-[inset_0_2px_2px_rgba(255,255,255,0.1),_0_3px_6px_rgba(0,0,0,0.3)]

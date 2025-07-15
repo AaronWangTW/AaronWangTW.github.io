@@ -7,7 +7,7 @@ import Capsule from './components/Capsule';
 import About from './components/content/About';
 import Projects from './components/content/Projects';
 import Contact from './components/content/Contact';
-import { initPhysics, tick, addWalls, addScreen } from './lib/physics';
+import { initPhysics, tick, addWalls, addScreen, registerPorts, setOnPluggedCallback } from './lib/physics';
 
 export default function HomePage() {
   const [activeContent, setActiveContent] = useState(null);
@@ -17,7 +17,12 @@ export default function HomePage() {
     initPhysics();
     addWalls();
     addScreen(screenRef.current);
+    registerPorts();
+    setOnPluggedCallback((plug) => {
+      setActiveContent(plug?.content);
+    });
     tick();        // start rendering loop
+    
   }, []);
 
   return (
@@ -27,9 +32,9 @@ export default function HomePage() {
         <RetroScreen content={activeContent} />
       </div>
 
-      <Capsule label="About Me" onPlug={() => setActiveContent(<About />)} x={220} y={100} />
-      <Capsule label="Projects" onPlug={() => setActiveContent(<Projects />)} x={120} y={100}/>
-      <Capsule label="Contact" onPlug={() => setActiveContent(<Contact />)} x={20} y={100}/>
+      <Capsule label="About Me" content={<About/>} x={220} y={100} />
+      <Capsule label="Projects" content={<Projects />} x={120} y={100} />
+      <Capsule label="Contact" content={<Contact />} x={20} y={100} />
     </main>
   );
 }

@@ -8,6 +8,23 @@ let mouse, mouseConstraint;
 const bodies = new Map();
 const initialPositions = new Map();
 const wireVisuals = new Map();
+const ports = [];
+
+const SNAP_DISTANCE = 20;      // distance to snap
+const DETACH_DISTANCE = 35;    // distance required to pull away
+
+let onPluggedCallback = null;
+let plugStack = []; // LIFO stack for currently snapped plugs
+
+export function setOnPluggedCallback(cb) {
+  onPluggedCallback = cb;
+}
+
+function updateActiveContent() {
+  // Top of stack or null
+  const topPlug = plugStack.length > 0 ? plugStack[plugStack.length - 1] : null;
+  if (onPluggedCallback) onPluggedCallback(topPlug);
+}
 
 export function initPhysics() {
     if (engine) return;
@@ -41,22 +58,21 @@ export function initPhysics() {
     Matter.Runner.run(runner, engine);
 }
 
-export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segmentCount = 15) {
-    const segmentLength = 15;
-    const segmentWidth = 8;
+export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segmentCount = 20, content) {
+    const segmentLength = 20;
+    const segmentWidth = 12;
     const segments = [];
     const visuals = [];
 
     let previousBody = null;
 
     for (let i = 0; i < segmentCount; i++) {
-        const segment = Matter.Bodies.rectangle(
+        const segment = Matter.Bodies.circle(
             startBody.position.x + startOffset.x,
             startBody.position.y + startOffset.y + i * segmentLength,
-            segmentWidth,
-            segmentLength,
+            i == segmentCount - 1 ? segmentWidth * 2 : segmentWidth,
             {
-                collisionFilter: { group: -1 }, // Prevent segments from colliding with each other
+                collisionFilter: { group: -1 },
                 frictionAir: 0.02,
             }
         );
@@ -64,33 +80,31 @@ export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segment
         Matter.World.add(world, segment);
         segments.push(segment);
 
-        const el = document.createElement('div');
-        el.style.position = 'absolute';
-        el.style.width = `${segmentWidth}px`;
-        el.style.height = `${segmentLength}px`;
-        el.style.background = '#666';
-        el.style.borderRadius = '2px';
-        el.style.pointerEvents = 'none';
-        el.style.zIndex = '1';
-        el.style.transformOrigin = 'center';
-        el.style.transform = `
-  translate(${segment.position.x - segmentWidth / 2}px, ${segment.position.y - segmentLength / 2}px)
-  rotate(${segment.angle}rad)
-`;
-        document.getElementById("container").appendChild(el);
-        visuals.push({ body: segment, el });
-
         if (previousBody) {
             const constraint = Matter.Constraint.create({
                 bodyA: previousBody,
                 bodyB: segment,
                 length: segmentLength,
-                stiffness: 0.8,
+                stiffness: 0.5,
             });
             Matter.World.add(world, constraint);
         }
 
         previousBody = segment;
+    }
+
+    // Visuals (n - 1)
+    for (let i = 0; i < segments.length - 1; i++) {
+        const el = document.createElement('div');
+        el.style.position = 'absolute';
+        el.style.background = '#666';
+        el.style.borderRadius = '2px';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '1';
+        el.style.transformOrigin = 'center';
+        document.getElementById("container").appendChild(el);
+
+        visuals.push({ bodyA: segments[i], bodyB: segments[i + 1], el });
     }
 
     // Attach first segment to capsule
@@ -104,10 +118,77 @@ export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segment
 
     Matter.World.add(world, attach);
 
-    wireVisuals.set(startBody, visuals);
+    const plugEl = document.createElement('div');
+    plugEl.style.position = 'absolute';
+    plugEl.style.width = '40px';
+    plugEl.style.height = '40px';
+    plugEl.style.pointerEvents = 'none';
+    plugEl.style.zIndex = '3';
+    plugEl.style.transformOrigin = 'center';
+
+    // === Main trapezoid body ===
+    // Wide side is at the *bottom* where prongs attach
+    const bodyEl = document.createElement('div');
+    bodyEl.style.position = 'absolute';
+    bodyEl.style.top = '0';
+    bodyEl.style.left = '50%';
+    bodyEl.style.transform = 'translateX(-50%)';
+    bodyEl.style.width = '36px';
+    bodyEl.style.height = '24px';
+    bodyEl.style.background = '#777';
+    bodyEl.style.border = '2px solid #333';
+    bodyEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    // Flipped trapezoid: narrow top (wire side), wide bottom (socket side)
+    bodyEl.style.clipPath = 'polygon(80% 0%, 20% 0%, 0 100%, 100% 100%)';
+    bodyEl.style.zIndex = '10'
+    plugEl.appendChild(bodyEl);
+
+    // === Two prongs attached to wide *bottom* edge ===
+    for (let i = 0; i < 2; i++) {
+        const prong = document.createElement('div');
+        prong.style.position = 'absolute';
+        // Place below the trapezoid bottom edge
+        prong.style.bottom = '10px'; // extend below the wide side
+        prong.style.left = i === 0 ? '12px' : '22px';
+        prong.style.width = '4px';
+        prong.style.height = '10px';
+        prong.style.background = '#ccc';
+        prong.style.border = '1px solid #555';
+        prong.style.boxShadow = '0 0 2px rgba(0,0,0,0.3)';
+        prong.style.zIndex = '0';
+        plugEl.appendChild(prong);
+    }
+
+    document.getElementById('container').appendChild(plugEl);
+
+    console.log(content)
+
+    // Store visual segments + plug
+    wireVisuals.set(startBody, {
+        segments: visuals,
+        plug: { body: segments[segments.length - 1], el: plugEl, snapped: false, content: content },
+    });
 }
 
-export function addCapsule(el, { x = 100, y = 100 } = {}) {
+export function registerPorts() {
+    const portEls = document.querySelectorAll('.trapezoid-port'); // any class you use
+    portEls.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const x = rect.left + rect.width / 2 + window.scrollX;
+        const y = rect.top + rect.height / 2 + window.scrollY;
+
+        // Create static physics body matching port location
+        const portBody = Matter.Bodies.rectangle(x, y, rect.width, rect.height, {
+            isStatic: true,
+            label: 'port',
+        });
+        Matter.World.add(world, portBody);
+
+        ports.push({ body: portBody, el }); // store ref for snapping
+    });
+}
+
+export function addCapsule(el, { x = 100, y = 100 } = {}, content) {
     if (!engine || !el) return;
 
     const width = el.offsetWidth;
@@ -122,8 +203,9 @@ export function addCapsule(el, { x = 100, y = 100 } = {}) {
         width,
         height,
         {
-            restitution: 0.5,
+            restitution: 0.3,
             friction: 0.3,
+            frictionStatic: 2,
             frictionAir: 0.01,
         }
     );
@@ -131,7 +213,7 @@ export function addCapsule(el, { x = 100, y = 100 } = {}) {
     Matter.World.add(world, body);
     bodies.set(el, body);
 
-    addPhysicalWire(body, { x: 50, y: 0 });
+    addPhysicalWire(body, { x: width / 2 - 5, y: height / 2 - 10 }, 20,content);
 
     // Make sure the element's initial CSS position matches x, y
     el.style.position = 'absolute';
@@ -171,46 +253,90 @@ export function tick() {
 
             el.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${body.angle}rad)`;
         });
-       wireVisuals.forEach((segments) => {
-  for (let i = 0; i < segments.length - 1; i++) {
-    const { body: currBody, el: currEl } = segments[i];
-    const { body: nextBody } = segments[i + 1];
+        wireVisuals.forEach(({ segments, plug }) => {
+            segments.forEach(({ bodyA, bodyB, el }) => {
+                const p0 = bodyA.position;
+                const p1 = bodyB.position;
 
-    const p0 = currBody.position;
-    const p1 = nextBody.position;
+                const dx = p1.x - p0.x;
+                const dy = p1.y - p0.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx);
 
-    const dx = p1.x - p0.x;
-    const dy = p1.y - p0.y;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx);
+                const midX = (p0.x + p1.x) / 2;
+                const midY = (p0.y + p1.y) / 2;
 
-    // Position at midpoint
-    const midX = (p0.x + p1.x) / 2;
-    const midY = (p0.y + p1.y) / 2;
-
-    // Set the style to connect p0 and p1
-    currEl.style.width = `${length}px`;
-    currEl.style.height = `8px`; // fixed thickness for wire segment
-    currEl.style.transformOrigin = 'center center';
-
-    currEl.style.transform = `
+                el.style.width = `${length}px`;
+                el.style.height = `8px`;
+                el.style.transformOrigin = 'center center';
+                el.style.transform = `
       translate(${midX}px, ${midY}px)
       rotate(${angle}rad)
       translate(-50%, -50%)
     `;
-  }
-
-  // Last segment: you can either hide it or position it normally:
-  if (segments.length > 0) {
-    const last = segments[segments.length - 1];
-    last.el.style.width = `8px`;
-    last.el.style.height = `8px`;
-    last.el.style.transform = `
-      translate(${last.body.position.x}px, ${last.body.position.y}px)
-      translate(-50%, -50%)
+            });
+            if (plug) {
+                const { body, el } = plug;
+                el.style.transform = `
+      translate(${body.position.x + el.offsetWidth / 2}px, ${body.position.y}px)
+      translate(-50%, -50%) rotate(${body.angle}rad)
     `;
-  }
-});
+                const x = body.position.x;
+                const y = body.position.y;
+                if (!plug.snapped) {
+                    // Not snapped yet → check for proximity
+                    for (let { body: portBody } of ports) {
+                        const dx = portBody.position.x - x;
+                        const dy = portBody.position.y - y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < SNAP_DISTANCE) {
+                            // Snap exactly onto port
+                            Matter.Body.setPosition(body, {
+                                x: portBody.position.x,
+                                y: portBody.position.y,
+                            });
+                            Matter.Body.setVelocity(body, { x: 0, y: 0 });
+                            Matter.Body.setAngularVelocity(body, 0);
+
+                            // Disable collisions with the port
+                            body.collisionFilter.mask = 0;
+
+                            plugStack.push(plug);
+                            updateActiveContent();
+
+                            plug.snapped = true;
+                            plug.snapTarget = portBody;
+                            break;
+                        }
+                    }
+                } else {
+                    // Already snapped → check if pulled away
+                    const portBody = plug.snapTarget;
+                    const dx = x - portBody.position.x;
+                    const dy = y - portBody.position.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist > DETACH_DISTANCE) {
+                        // ✅ Detach plug → restore normal collision
+                        body.collisionFilter.mask = 0xFFFFFFFF; // restore default mask
+                        plug.snapped = false;
+                        plug.snapTarget = null;
+                        plugStack = plugStack.filter((p) => p !== plug);
+                        updateActiveContent();
+                    } else {
+                        // Keep plug locked on the port position
+                        Matter.Body.setPosition(body, {
+                            x: portBody.position.x,
+                            y: portBody.position.y,
+                        });
+                        Matter.Body.setVelocity(body, { x: 0, y: 0 });
+                        Matter.Body.setAngularVelocity(body, 0);
+                    }
+                }
+
+            }
+        });
 
         tick();
     });
