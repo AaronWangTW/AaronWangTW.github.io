@@ -71,6 +71,9 @@ export default function HomePage() {
       <Capsule label="About Me" content={<About/>} x={80} y={150} />
       <Capsule label="Projects" content={<Projects />} x={30} y={550} />
       <Capsule label="Contact" content={<Contact />} x={700} y={700} />
+      <Capsule label="DO NOT" content={
+        <iframe className='w-full h-full' src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1?si=j8-78-f6kRtrl4mr&amp;controls=0&mute=1" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"></iframe>
+      } x={850} y={100} />
 
       {/* Capsule racks */}
       <RackSlot x={50} y={200} width={150} height={50} />
