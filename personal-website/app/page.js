@@ -10,6 +10,7 @@ import RackSlot from './components/Racks';
 import bgImg from '../public/gplay.png'
 
 export default function HomePage() {
+  const [isMobile, setIsMobile] = useState(null);
   const [activeContent, setActiveContent] = useState(null);
   const screenRef = useRef();
   const [quickSelect, setQuickSelect] = useState('');
@@ -34,22 +35,36 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    initPhysics();
-    addWalls();
-    addScreen(screenRef.current);
-    registerPorts();
-    setOnPluggedCallback((plug) => {
-      setActiveContent(plug?.content);
+    const mobile = window.matchMedia("(pointer: coarse)").matches;
+    setIsMobile(mobile);
+    if (!mobile) {
+      initPhysics();
+      addWalls();
+      requestAnimationFrame(() => {
+      if (screenRef.current) {
+        addScreen(screenRef.current);
+        registerPorts();
+      }
     });
-    tick();        // start rendering loop
-    
+      setOnPluggedCallback((plug) => {
+        setActiveContent(plug?.content);
+      });
+      tick();        // start rendering loop
+    }
   }, []);
+
+  if (isMobile === null) return null;
 
   return (
     <main className="relative w-full h-screen overflow-hidden" id='container' style={{
       backgroundImage: `url(${bgImg.src})`,
       backgroundColor: "#01020d"
     }}>
+      <div 
+    id="physics-overlay" 
+    className="absolute inset-0 z-0"
+    style={{ pointerEvents: "auto" }} 
+  />
       {/* Quickselect Dropdown */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <select
@@ -68,16 +83,20 @@ export default function HomePage() {
         <RetroScreen content={activeContent} />
       </div>
 
-      <Capsule label="About Me" content={<About/>} x={80} y={150} />
-      <Capsule label="Projects" content={<Projects />} x={30} y={550} />
-      <Capsule label="Contact" content={<Contact />} x={700} y={700} />
-      <Capsule label="DO NOT" content={
-        <iframe className='w-full h-full' src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1?si=j8-78-f6kRtrl4mr&amp;controls=0&mute=1" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"></iframe>
-      } x={850} y={100} />
+      {!isMobile && (
+        <>
+          <Capsule label="About Me" content={<About />} x={80} y={150} />
+          <Capsule label="Projects" content={<Projects />} x={30} y={550} />
+          <Capsule label="Contact" content={<Contact />} x={700} y={700} />
+          <Capsule label="DO NOT" content={
+            <iframe className='w-full h-full' src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1?si=j8-78-f6kRtrl4mr&amp;controls=0&mute=1" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"></iframe>
+          } x={850} y={100} />
 
-      {/* Capsule racks */}
-      <RackSlot x={50} y={200} width={150} height={50} />
-      <RackSlot x={50} y={600} width={150} height={50} />
+          {/* Capsule racks */}
+          <RackSlot x={50} y={200} width={150} height={50} />
+          <RackSlot x={50} y={600} width={150} height={50} />
+        </>
+      )}
     </main>
   );
 }

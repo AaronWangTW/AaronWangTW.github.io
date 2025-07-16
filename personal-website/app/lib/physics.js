@@ -29,6 +29,7 @@ function updateActiveContent() {
 export function initPhysics() {
     if (engine) return;
 
+    console.log("init physics")
     engine = Matter.Engine.create();
     engine.enableSleeping = true;
     world = engine.world;
@@ -49,14 +50,6 @@ export function initPhysics() {
 
 
     Matter.World.add(world, mouseConstraint);
-
-    Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
-        console.log('Drag started', event.body);
-    });
-
-    Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
-        console.log('Drag ended', event.body);
-    });
 
     runner = Matter.Runner.create();
     Matter.Runner.run(runner, engine);
@@ -176,8 +169,6 @@ export function addPhysicalWire(startBody, startOffset = { x: 0, y: 0 }, segment
 
     document.getElementById('container').appendChild(plugEl);
 
-    console.log(content)
-
     // Store visual segments + plug
     wireVisuals.set(startBody, {
         segments: visuals,
@@ -205,6 +196,11 @@ export function registerPorts() {
 
 export function addCapsule(el, { x = 100, y = 100 } = {}, content) {
     if (!engine || !el) return;
+
+    if (bodies.has(el)) {
+    // Already added capsule for this element; skip
+    return;
+  }
 
     const width = el.offsetWidth;
     const height = el.offsetHeight;
