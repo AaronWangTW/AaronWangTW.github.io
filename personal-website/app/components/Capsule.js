@@ -8,7 +8,7 @@ export default function Capsule({ label, x = 0, y = 0 ,content}) {
         addCapsule(ref.current, { x, y }, content);
       });
     }
-  }, [x,y,content]);
+  }, [x,y]);
 
   return (
     <div
