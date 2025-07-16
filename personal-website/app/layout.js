@@ -7,7 +7,7 @@ const doto = Doto({
 })
 
 export const metadata = {
-  title: 'Aaron Wang\'s Website',
+  title: `Aaron Wang\'s Website`,
   description: 'Welcome to my site!',
 };
 

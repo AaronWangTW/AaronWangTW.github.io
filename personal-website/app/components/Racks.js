@@ -4,7 +4,7 @@ import { addRackPhysics } from "../lib/physics";
 export default function RackSlot({ x = 0, y = 0, width = 120, height = 40 }) {
     useEffect(() => {
         addRackPhysics(x,y,width,height);
-      }, []);
+      }, [x,y,width,height]);
   return (
     <div
       className="rack-slot absolute"

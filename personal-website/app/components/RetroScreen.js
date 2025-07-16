@@ -49,7 +49,7 @@ export default function RetroScreen({ content }) {
       {/* Content */}
       <div className="relative z-30 text-green-200 text-md h-full w-full overflow-y-auto">
         {content || <div>
-          <p className="text-center opacity-70 mt-30">Welcome! You're visiting the website of:</p>
+          <p className="text-center opacity-70 mt-30">Welcome! You&apos;re visiting the website of:</p>
           <h1 className="text-center text-6xl">Aaron Wang</h1>
           <p className="text-center opacity-70 mt-30">Awaiting input…<br></br>Plug in a capsule or use the quick select to inject content.</p>
         </div>
