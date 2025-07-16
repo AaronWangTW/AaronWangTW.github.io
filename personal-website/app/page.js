@@ -1,6 +1,4 @@
 'use client';
-
-import Matter from 'matter-js';
 import { useState, useEffect, useRef } from 'react';
 import RetroScreen from './components/RetroScreen';
 import Capsule from './components/Capsule';
@@ -9,6 +7,7 @@ import Projects from './components/content/Projects';
 import Contact from './components/content/Contact';
 import { initPhysics, tick, addWalls, addScreen, registerPorts, setOnPluggedCallback } from './lib/physics';
 import RackSlot from './components/Racks';
+import bgImg from '../public/gplay.png'
 
 export default function HomePage() {
   const [activeContent, setActiveContent] = useState(null);
@@ -47,7 +46,10 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="relative w-full h-screen bg-[#1e1e1e] overflow-hidden" id='container'>
+    <main className="relative w-full h-screen overflow-hidden" id='container' style={{
+      backgroundImage: `url(${bgImg.src})`,
+      backgroundColor: "#01020d"
+    }}>
       {/* Quickselect Dropdown */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <select
